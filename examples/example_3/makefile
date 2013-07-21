@@ -6,35 +6,39 @@
 
 UNITY_ROOT=../..
 C_COMPILER=gcc
-TARGET_BASE1=test1
-TARGET_BASE2=test2
+TARGET_BASE=all_tests
 ifeq ($(OS),Windows_NT)
 	TARGET_EXTENSION=.exe
 else
 	TARGET_EXTENSION=.out
 endif
-TARGET1 = $(TARGET_BASE1)$(TARGET_EXTENSION)
-TARGET2 = $(TARGET_BASE2)$(TARGET_EXTENSION)
-SRC_FILES1=$(UNITY_ROOT)/src/unity.c src/ProductionCode.c  test/TestProductionCode.c  test/no_ruby/TestProductionCode_Runner.c
-SRC_FILES2=$(UNITY_ROOT)/src/unity.c src/ProductionCode2.c test/TestProductionCode2.c test/no_ruby/TestProductionCode2_Runner.c
-INC_DIRS=-Isrc -I$(UNITY_ROOT)/src
-SYMBOLS=-DTEST
+TARGET = $(TARGET_BASE)$(TARGET_EXTENSION)
+SRC_FILES=\
+  $(UNITY_ROOT)/src/unity.c \
+  $(UNITY_ROOT)/extras/fixture/src/unity_fixture.c \
+  src/ProductionCode.c \
+  src/ProductionCode2.c \
+  test/TestProductionCode.c \
+  test/TestProductionCode2.c \
+  test/test_runners/_all_tests.c \
+  test/test_runners/_all_tests_main.c
+INC_DIRS=-Isrc -I$(UNITY_ROOT)/src -I$(UNITY_ROOT)/extras/fixture/src
+SYMBOLS=
 
 ifeq ($(OS),Windows_NT)
-	CLEANUP = del /F /Q $(TARGET1) && del /F /Q $(TARGET2)
+	CLEANUP = del /F /Q $(TARGET)
 else
-	CLEANUP = rm -f build/*.o ; rm -f $(TARGET1) ; rm -f $(TARGET2)
+	CLEANUP = rm -f build/*.o ; rm -f $(TARGET1)
 endif
 
-all: clean default
+all: clean generate default
+
+generate:
+	_generate_test_runners.bat
 
 default:
-#	ruby auto/generate_test_runner.rb test/TestProductionCode.c  test/no_ruby/TestProductionCode_Runner.c
-#	ruby auto/generate_test_runner.rb test/TestProductionCode2.c test/no_ruby/TestProductionCode2_Runner.c
-	$(C_COMPILER) $(INC_DIRS) $(SYMBOLS) $(SRC_FILES1) -o $(TARGET1)
-	$(C_COMPILER) $(INC_DIRS) $(SYMBOLS) $(SRC_FILES2) -o $(TARGET2)
-	./$(TARGET1)
-	./$(TARGET2)
+	$(C_COMPILER) $(INC_DIRS) $(SYMBOLS) $(SRC_FILES) -o $(TARGET)
+	./$(TARGET)
 
 clean:
 	$(CLEANUP)
